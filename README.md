@@ -1,10 +1,9 @@
-# minghuaetc-hack-CSharp
-C# 名华慕课刷课时工具 Android App 协议 Python版 支持一键刷单元所有课程的课时
+# minghuaetc-hack-Python
+名华慕课刷课时工具 Android App 协议 Python 版 支持一键刷单元所有课程的课时
 
 ## 环境引用
 
 Python 3 br
-Newtonsoft.Json (已经将源代码打包至项目里，请遵守Newtonsoft.Json的开源协议)
 
 ## 免责申明
 
