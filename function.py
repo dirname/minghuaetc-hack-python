@@ -8,7 +8,7 @@ import requests
 from prettytable import PrettyTable
 
 
-def pwdEncrypt(password):
+def pwd_encrypt(password):
     key = "DrZPGgL9WHkZrVQ0DT2bASoZE0Z8oc4s"
     key = base64.standard_b64decode(key)
     k = pyDes.triple_des(key, pyDes.ECB, IV=None, pad=None, padmode=pyDes.PAD_PKCS5)
@@ -17,20 +17,21 @@ def pwdEncrypt(password):
     return bytes.decode(res, "utf8")
 
 
-def getSign(params):
+def get_sign(params):
     params += "xF3m1m4CrvQd3VsfsEpIf6s0CPWT7sJu"
     m2 = hashlib.md5()
     m2.update(params.encode("utf8"))
     return m2.hexdigest()
 
-class API():
+
+class API:
     url = "http://api.mooc.minghuaetc.com/v1"
     moocsk = ""
     moocvk = ""
     stuName = ""
     isLogin = ""
 
-    def getOrg(self):
+    def get_org(self):
         cmd = "sys.org"
         client = "chinamoocs"
         index = "1"
@@ -38,7 +39,7 @@ class API():
         size = "200"
         type = "10"
         sign = "9081119e45061013400710d32e87a49a"
-        postData = {
+        post_data = {
             "cmd": cmd,
             "client": client,
             "index": index,
@@ -47,35 +48,35 @@ class API():
             "type": type,
             "sign": sign
         }
-        response = requests.post(self.url, data=postData)
-        object = json.loads(response.text)
-        if (object["message"] != "命令执行成功"):
+        response = requests.post(self.url, data=post_data)
+        obj = json.loads(response.text)
+        if obj["message"] != "命令执行成功":
             print("%s %s" % ("[Error]", "获取校园平台失败"))
             sys.exit(0)
         else:
             table = PrettyTable(["学校序号", "学校名称"])
-            orgs = object["result"]["orgs"]
+            orgs = obj["result"]["orgs"]
             for items in orgs:
-                orgName = items["orgName"]
-                orgID = items["orgId"]
-                table.add_row([orgID, orgName])
+                org_name = items["orgName"]
+                org_id = items["orgId"]
+                table.add_row([org_id, org_name])
             print(table)
 
-    def login(self,orgid, user, pwd):
+    def login(self, org_id, user, pwd):
         cmd = "sys.login.no"
         client = "chinamoocs"
-        sign = getSign(cmd + client + orgid + user + pwdEncrypt(pwd))
-        postData = {
+        sign = get_sign(cmd + client + org_id + user + pwd_encrypt(pwd))
+        post_data = {
             "cmd": cmd,
             "client": client,
-            "orgid": orgid,
+            "orgid": org_id,
             "user": user,
-            "password": pwdEncrypt(pwd),
+            "password": pwd_encrypt(pwd),
             "sign": sign
         }
-        response = requests.post(self.url, data=postData)
+        response = requests.post(self.url, data=post_data)
         obj = json.loads(response.text)
-        if (obj["message"] == "命令执行成功"):
+        if obj["message"] == "命令执行成功":
             self.stuName = obj["result"]["user"]["aliasName"]
             self.moocsk = response.cookies["moocsk"]
             self.moocvk = response.cookies["moocvk"]
@@ -93,8 +94,8 @@ class API():
         index = "1"
         size = "5"
         status = "10"
-        sign = getSign(cmd + client + index + size + status)
-        postData = {
+        sign = get_sign(cmd + client + index + size + status)
+        post_data = {
             "cmd": cmd,
             "client": client,
             "index": index,
@@ -107,28 +108,28 @@ class API():
             'moocsk': self.moocsk,
             'moocvk': self.moocvk
         }
-        response = requests.post(self.url, data=postData, cookies=cookies)
+        response = requests.post(self.url, data=post_data, cookies=cookies)
         obj = json.loads(response.text)
-        if (obj["message"] == "命令执行成功"):
+        if obj["message"] == "命令执行成功":
             table = PrettyTable(["课程序号", "课程名称", "结束时间"])
             courses = obj["result"]["courses"]
-            lessonID = 0
+            lesson_id = 0
             for items in courses:
-                courseName = items["courseName"]
-                endDate = items["endDate"]
-                table.add_row([lessonID, courseName, endDate])
-                lessonID += 1
+                course_name = items["courseName"]
+                end_date = items["endDate"]
+                table.add_row([lesson_id, course_name, end_date])
+                lesson_id += 1
             print(table)
             print()
             which = input("输入课程的序号以查看每一节课时详情, 输入\"end\"回到菜单, 课程序号: ")
-            if (which == "end"):
+            if which == "end":
                 self.menu()
             else:
                 try:
                     which = int(which)
-                    sessionId = courses[which]["sessionId"]
-                    courseId = courses[which]["courseId"]
-                    self.getClassOnly(courseId, sessionId)
+                    session_id = courses[which]["sessionId"]
+                    course_id = courses[which]["courseId"]
+                    self.get_class_only(course_id, session_id)
                 except Exception as ex:
                     print(ex)
                     print("[Error] 输入了错误的课程序号")
@@ -138,14 +139,14 @@ class API():
             print("[Error] " + obj["message"])
         self.cmd()
 
-    def getClassOnly(self,course,session):
+    def get_class_only(self, course, session):
         cmd = "course.learn"
         client = "chinamoocs"
         course = str(course)
         session = str(session)
         all = "1"
-        sign = getSign(cmd + client + course + session + all)
-        postData = {
+        sign = get_sign(cmd + client + course + session + all)
+        post_data = {
             "cmd": cmd,
             "client": client,
             "course": course,
@@ -159,33 +160,28 @@ class API():
             'moocvk': self.moocvk
         }
 
-        response = requests.post(self.url, data=postData, cookies=cookies)
+        response = requests.post(self.url, data=post_data, cookies=cookies)
         string = response.text
         obj = json.loads(string)
-        if (obj["message"] == "命令执行成功"):
+        if obj["message"] == "命令执行成功":
             print()
             units = obj["result"]["units"]
             table = PrettyTable(["课程ID", "课程名称", "状态"])
             for ItemUnits in units:
-                itemObj = ItemUnits["lessons"]
-                for ItemLessons in itemObj:
-                    lessonNo = ItemLessons["lessonNo"]
-                    lessonId = ItemLessons["lessonId"]
-                    lessonName = ItemLessons["lessonName"]
-                    lessonArray = ItemLessons["items"]
-                    for items in lessonArray:
+                item_obj = ItemUnits["lessons"]
+                for ItemLessons in item_obj:
+                    lesson_array = ItemLessons["items"]
+                    for items in lesson_array:
                         status = items["status"]
-                        if (status == 0):
+                        if status == 0:
                             status = "未观看"
-                        elif (status == 1):
+                        elif status == 1:
                             status = "正在观看"
-                        elif (status == 2):
+                        elif status == 2:
                             status = "已观看"
-                        itemName = items["itemName"]
-                        itemId = items["itemId"]
-                        itemType = items["itemType"]
-                        meta = items["meta"]
-                        table.add_row([itemId, itemName, status])
+                        item_name = items["itemName"]
+                        item_id = items["itemId"]
+                        table.add_row([item_id, item_name, status])
             print(table)
             self.cmd()
 
@@ -197,28 +193,28 @@ class API():
         print("############## Powered by Ah ! ################")
         print()
         print("-----------------------------------------------")
-        self.getOrg()
-        orgid = input("\n请选择您的学校,输入学校序号: ")
-        while (orgid.replace(" ", "") == ""):
-            orgid = input("请选择您的学校,输入学校序号: ")
-        studentID = input("请输入您的学号: ")
-        while (studentID.replace(" ", "") == ""):
-            studentID = input("请输入您的学号: ")
-        studentPwd = input("请输入您的密码: ")
-        while (studentPwd.replace(" ", "") == ""):
-            studentPwd = input("请输入您的密码: ")
-        self.isLogin = self.login(orgid, studentID, studentPwd)
-        while (self.isLogin != True):
-            studentID = input("请输入您的学号: ")
-            while (studentID.replace(" ", "") == ""):
-                studentID = input("请输入您的学号: ")
-            studentPwd = input("请输入您的密码: ")
-            while (studentPwd.replace(" ", "") == ""):
-                studentPwd = input("请输入您的密码: ")
-            self.isLogin = self.login(orgid, studentID, studentPwd)
+        self.get_org()
+        org_id = input("\n请选择您的学校,输入学校序号: ")
+        while org_id.replace(" ", "") == "":
+            org_id = input("请选择您的学校,输入学校序号: ")
+        student_id = input("请输入您的学号: ")
+        while student_id.replace(" ", "") == "":
+            student_id = input("请输入您的学号: ")
+        student_pwd = input("请输入您的密码: ")
+        while student_pwd.replace(" ", "") == "":
+            student_pwd = input("请输入您的密码: ")
+        self.is_login = self.login(org_id, student_id, student_pwd)
+        while not self.is_login:
+            student_id = input("请输入您的学号: ")
+            while student_id.replace(" ", "") == "":
+                student_id = input("请输入您的学号: ")
+            student_pwd = input("请输入您的密码: ")
+            while student_pwd.replace(" ", "") == "":
+                student_pwd = input("请输入您的密码: ")
+            self.is_login = self.login(org_id, student_id, student_pwd)
 
     def menu(self):
-        if (self.isLogin):
+        if self.is_login:
             table = PrettyTable(["指令", "指令名称"])
             table.add_row(["1", "查看我的课程"])
             table.add_row(["2", "一键完成所有课程"])
@@ -242,8 +238,8 @@ class API():
         index = "1"
         size = "5"
         status = "10"
-        sign = getSign(cmd + client + index + size + status)
-        postData = {
+        sign = get_sign(cmd + client + index + size + status)
+        post_data = {
             "cmd": cmd,
             "client": client,
             "index": index,
@@ -256,25 +252,25 @@ class API():
             'moocsk': self.moocsk,
             'moocvk': self.moocvk
         }
-        response = requests.post(self.url, data=postData, cookies=cookies)
+        response = requests.post(self.url, data=post_data, cookies=cookies)
         string = response.text
         obj = json.loads(string)
-        if (obj["message"] == "命令执行成功"):
+        if obj["message"] == "命令执行成功":
             table = PrettyTable(["课程序号", "课程名称", "结束时间"])
             courses = obj["result"]["courses"]
-            lessonID = 0
+            lesson_id = 0
             for items in courses:
-                courseName = items["courseName"]
-                endDate = items["endDate"]
-                table.add_row([lessonID, courseName, endDate])
-                lessonID += 1
+                course_name = items["courseName"]
+                end_date = items["endDate"]
+                table.add_row([lesson_id, course_name, end_date])
+                lesson_id += 1
             print(table)
             print()
             which = int(input("请输入课程的序号(注意以\"0开始\"): "))
             try:
-                sessionId = courses[which]["sessionId"]
-                courseId = courses[which]["courseId"]
-                self.getClass(courseId, sessionId)
+                session_id = courses[which]["sessionId"]
+                course_id = courses[which]["courseId"]
+                self.get_class(course_id, session_id)
             except Exception as ex:
                 print(ex)
                 print("[Error] 输入了错误的课程序号")
@@ -284,14 +280,14 @@ class API():
             print("[Error] " + obj["message"])
         self.cmd()
 
-    def getClass(self,course,session):
+    def get_class(self, course, session):
         cmd = "course.learn"
         client = "chinamoocs"
         course = str(course)
         session = str(session)
         all = "1"
-        sign = getSign(cmd + client + course + session + all)
-        postData = {
+        sign = get_sign(cmd + client + course + session + all)
+        post_data = {
             "cmd": cmd,
             "client": client,
             "course": course,
@@ -305,34 +301,31 @@ class API():
             'moocvk': self.moocvk
         }
 
-        response = requests.post(self.url, data=postData, cookies=cookies)
+        response = requests.post(self.url, data=post_data, cookies=cookies)
         string = response.text
         obj = json.loads(string)
-        if (obj["message"] == "命令执行成功"):
+        if obj["message"] == "命令执行成功":
             print()
             units = obj["result"]["units"]
             table = PrettyTable(["课程ID", "课程名称", "状态"])
             for ItemUnits in units:
-                itemObj = ItemUnits["lessons"]
-                for ItemLessons in itemObj:
-                    lessonNo = ItemLessons["lessonNo"]
-                    lessonId = ItemLessons["lessonId"]
-                    lessonName = ItemLessons["lessonName"]
-                    lessonArray = ItemLessons["items"]
-                    for items in lessonArray:
+                item_obj = ItemUnits["lessons"]
+                for ItemLessons in item_obj:
+                    lesson_array = ItemLessons["items"]
+                    for items in lesson_array:
                         status = items["status"]
-                        if (status == 0):
+                        if status == 0:
                             status = "未观看"
-                        elif (status == 1):
+                        elif status == 1:
                             status = "正在观看"
-                        elif (status == 2):
+                        elif status == 2:
                             status = "已观看"
-                        itemName = items["itemName"]
-                        itemId = items["itemId"]
-                        itemType = items["itemType"]
+                        item_name = items["itemName"]
+                        item_id = items["itemId"]
+                        item_type = items["itemType"]
                         meta = items["meta"]
-                        table.add_row([itemId, itemName, status])
-                        self.getItems(lessonId,itemId,itemType,meta,session,itemName)
+                        table.add_row([item_id, item_name, status])
+                        self.get_items(item_id, item_type, meta, item_name)
             print()
             print("##### 刷课前的课程观看状态 #####")
             print()
@@ -343,33 +336,34 @@ class API():
         else:
             print("[Error] " + obj["message"])
 
-    def getItems(self,lessonId,itemid,itemntype,metaID,session,itemName):
+    def get_items(self, item_id, item_type, meta_id, item_name):
         header = {
-            "Referer":"http://ynnubs.minghuaetc.com/study/unit/" + itemid + ".mooc"
+            "Referer": "http://ynnubs.minghuaetc.com/study/unit/" + item_id + ".mooc"
         }
         cookies = {
             'moocsk': self.moocsk,
             'moocvk': self.moocvk
         }
 
-        postData = {
-            "itemId": itemid,
-            "itemType": itemntype,
+        post_data = {
+            "itemId": item_id,
+            "itemType": item_type,
             "testPaperId": ""
         }
-        response = requests.post("http://ynnubs.minghuaetc.com/study/play.mooc", data=postData, cookies=cookies, headers=header)
+        response = requests.post("http://ynnubs.minghuaetc.com/study/play.mooc", data=post_data, cookies=cookies,
+                                 headers=header)
         string = response.text
-        match = re.findall("meta = {\"duration.*",string)
+        match = re.findall("meta = {\"duration.*", string)
         meta = str(match[0]).replace("meta = ", "").replace("};", "}")
         obj = json.loads(meta)
         duration = str(obj["duration"])
-        self.submitLesson(str(metaID),itemid,duration,itemName)
+        self.submit_lesson(str(meta_id), item_id, duration, item_name)
 
-    def submitLesson(self,meta,item,duration,className):
+    def submit_lesson(self, meta, item, duration, class_name):
         cmd = "learn.pos"
         client = "chinamoocs"
-        sign = getSign(cmd + client + item + duration + duration + meta)
-        postData = {
+        sign = get_sign(cmd + client + item + duration + duration + meta)
+        post_data = {
             "cmd": cmd,
             "client": client,
             "item": item,
@@ -384,14 +378,14 @@ class API():
             'moocvk': self.moocvk
         }
 
-        response = requests.post(self.url, data=postData, cookies=cookies)
+        response = requests.post(self.url, data=post_data, cookies=cookies)
         obj = json.loads(response.text)
-        if (str(obj["message"]) != "命令执行成功"):
-            print("[%s] - %s %s" % (str(item),str(className),str(obj["message"])))
+        if str(obj["message"]) != "命令执行成功":
+            print("[%s] - %s %s" % (str(item), str(class_name), str(obj["message"])))
         else:
-            print("[%s] - %s %s" % (str(item), str(className), str(obj["message"])))
+            print("[%s] - %s %s" % (str(item), str(class_name), str(obj["message"])))
 
-    def changeUser(self):
+    def change_user(self):
         print("####### 更换用户 ######")
         self.init()
         self.menu()
@@ -399,17 +393,17 @@ class API():
     def cmd(self):
         cmd = input("\n输入指令以开始功能,\"menu\"显示功能菜单: ")
         print()
-        if (cmd == "1"):
+        if cmd == "1":
             self.course()
-        elif (cmd == "2"):
+        elif cmd == "2":
             self.lesson()
-        elif (cmd == "3"):
-            self.changeUser()
-        elif (cmd == "menu"):
+        elif cmd == "3":
+            self.change_user()
+        elif cmd == "menu":
             self.menu()
-        elif (cmd == "who"):
+        elif cmd == "who":
             self.who()
-        elif (cmd == "exit"):
+        elif cmd == "exit":
             table = PrettyTable(["Good bye !", "Have a good day !"])
             print(table)
             sys.exit(0)
