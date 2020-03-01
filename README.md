@@ -1,6 +1,9 @@
 # minghuaetc-hack-Python
 名华慕课刷课时工具 Android App 协议 Python 版 支持一键刷单元所有课程的课时
 
+## 该仓库的版本已过时 新仓库
+[minghuaetc-hack-Go](https://github.com/dirname/minghuaetc-hack-Go)
+
 ## 环境引用
 
 Python 3 </br>
